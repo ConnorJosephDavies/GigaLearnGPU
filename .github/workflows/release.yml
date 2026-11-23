@@ -1,0 +1,112 @@
+# Builds GigaLearnGPU on a clean GitHub-hosted Windows machine and publishes it.
+#
+# - Push a tag like v1.0.0  -> builds and attaches the zip to a GitHub Release.
+# - Run it by hand (Actions tab -> "Build release" -> Run workflow) -> builds and
+#   uploads the zip as a workflow artifact only, so you can test it first.
+
+name: Build release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CUDA_VERSION: "12.8.1"
+  LIBTORCH_URL: "https://download.pytorch.org/libtorch/cu128/libtorch-win-shared-with-deps-2.7.1%2Bcu128.zip"
+  # 75 = RTX 20xx, 86 = RTX 30xx, 89 = RTX 40xx, 120 = RTX 50xx
+  CUDA_ARCHS: "75;86;89;120"
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 300
+
+    steps:
+      - name: Check out (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install CUDA toolkit
+        id: cuda
+        uses: Jimver/cuda-toolkit@v0.2.24
+        with:
+          cuda: ${{ env.CUDA_VERSION }}
+          method: network
+          sub-packages: '["nvcc", "cudart", "crt", "nvvm", "nvtx", "nvrtc_dev", "cublas_dev", "cufft_dev", "curand_dev", "cusolver_dev", "cusparse_dev", "visual_studio_integration"]'
+
+      - name: Set up MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Ninja
+        run: choco install ninja -y --no-progress
+
+      - name: Download LibTorch
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri $env:LIBTORCH_URL -OutFile "$env:RUNNER_TEMP\libtorch.zip"
+          Expand-Archive "$env:RUNNER_TEMP\libtorch.zip" -DestinationPath GigaLearnCPP
+          Remove-Item "$env:RUNNER_TEMP\libtorch.zip"
+          # CUDA 12 has no nvToolsExt library; drop it from LibTorch's CMake if it is still referenced.
+          $f = "GigaLearnCPP\libtorch\share\cmake\Caffe2\public\cuda.cmake"
+          (Get-Content $f -Raw) -replace 'CUDA::nvToolsExt', '' | Set-Content $f
+
+      - name: Build RocketGPU
+        shell: pwsh
+        run: |
+          cmake -S RocketGPU -B RocketGPU/build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DROCKETGPU_USE_CUDA=ON -DROCKETGPU_CPU_ISPC=OFF -DROCKETGPU_CUDA_SPLIT=ON `
+            -DROCKETGPU_NATIVE_ARCH=OFF `
+            "-DCMAKE_CUDA_ARCHITECTURES=$env:CUDA_ARCHS"
+          cmake --build RocketGPU/build
+
+      - name: Build GigaLearnGPU
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            "-DROCKETGPU_CUDA_ROOT=$env:CUDA_PATH" `
+            "-DCMAKE_CUDA_ARCHITECTURES=$env:CUDA_ARCHS"
+          cmake --build build
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $name = if ($env:GITHUB_REF_TYPE -eq "tag") { "GigaLearnGPU-$env:GITHUB_REF_NAME-win64" } else { "GigaLearnGPU-dev-win64" }
+          $out = "dist\$name"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          Copy-Item build\GigaLearnExample.exe, build\*.dll $out
+          if (Test-Path build\python_scripts) { Copy-Item -Recurse build\python_scripts $out }
+          Copy-Item LICENSE.md, PATCHES.md $out
+          Copy-Item .github\release\HOW_TO_RUN.txt $out
+          "name=$name" >> $env:GITHUB_ENV
+          # GitHub allows 2 GB per release file, so split the archive into 1.9 GB parts.
+          7z a -t7z -mx=7 -v1900m "dist\$name.7z" ".\$out\*"
+          Get-ChildItem dist -File | Format-Table Name, Length
+
+      - name: Upload as workflow artifact (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.name }}
+          path: dist/*.7z*
+          retention-days: 7
+
+      - name: Attach to GitHub Release (tag pushes)
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.7z*
+          generate_release_notes: true
