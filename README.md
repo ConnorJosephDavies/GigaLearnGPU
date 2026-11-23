@@ -35,7 +35,7 @@ On the same machine, the original CPU RocketSim path reached only a small fracti
 ## How it works
 
 ```mermaid
-flowchart LR
+flowchart TB
     A["State setters<br/>rewards · obs"] -- "mark changed arenas dirty" --> B["GpuPhysics bridge"]
     B -- "upload controls + dirty arenas" --> C["RocketGPU<br/>(CUDA batch)"]
     C -- "step all 4,096 arenas" --> C
