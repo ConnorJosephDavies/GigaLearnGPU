@@ -41,8 +41,8 @@ jobs:
         uses: Jimver/cuda-toolkit@v0.2.24
         with:
           cuda: ${{ env.CUDA_VERSION }}
-          method: network
-          sub-packages: '["nvcc", "cudart", "crt", "nvvm", "nvtx", "nvrtc_dev", "cublas_dev", "cufft_dev", "curand_dev", "cusolver_dev", "cusparse_dev", "visual_studio_integration"]'
+          method: local
+          use-github-cache: false
 
       - name: Set up MSVC developer environment
         uses: ilammy/msvc-dev-cmd@v1
