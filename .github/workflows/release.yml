@@ -70,7 +70,7 @@ jobs:
             -DROCKETGPU_USE_CUDA=ON -DROCKETGPU_CPU_ISPC=OFF -DROCKETGPU_CUDA_SPLIT=ON `
             -DROCKETGPU_NATIVE_ARCH=OFF `
             "-DCMAKE_CUDA_ARCHITECTURES=$env:CUDA_ARCHS"
-          cmake --build RocketGPU/build
+          cmake --build RocketGPU/build --target rocketgpu
 
       - name: Build GigaLearnGPU
         shell: pwsh
