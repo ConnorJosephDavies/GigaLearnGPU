@@ -1,0 +1,39 @@
+GigaLearnGPU - prebuilt Windows release
+=======================================
+
+This build was compiled on a clean GitHub-hosted machine by the
+"Build release" workflow in this repository (.github/workflows/release.yml).
+
+Requirements
+------------
+- Windows 10/11, 64-bit
+- An NVIDIA RTX 20, 30, 40 or 50 series GPU with an up-to-date driver
+- Python 3.11 installed (the trainer embeds Python for metrics)
+- Rocket League collision meshes dumped from your own copy of the game
+  (see https://github.com/ZealanL/RocketSim). They are not included.
+
+If the download came in several parts (.7z.001, .7z.002, ...), put them all in
+one folder and open the .001 file with 7-Zip to extract everything.
+
+Running
+-------
+Open a command prompt in this folder, then:
+
+    set PYTHONHOME=C:\path\to\Python311
+    set ROCKETSIM_MESHES=C:\path\to\collision_meshes
+    set GIGALEARN_GPU_PHYSICS=1
+    GigaLearnExample.exe
+
+Settings (environment variables)
+--------------------------------
+GIGALEARN_GPU_PHYSICS   1 = run every arena on the GPU (default: off, CPU)
+GIGALEARN_NUM_GAMES     number of arenas (default 4096 GPU / 256 CPU)
+GIGALEARN_TS_PER_ITR    steps per PPO iteration (default 400k GPU / 50k CPU)
+GIGALEARN_HALF_INFER    1 = fp16 rollout inference (default 1)
+GIGALEARN_ASYNC_PPO     1 = overlap collection and training (default off)
+
+This example trains a basic 1v1 bot with the stock rewards. To train your own
+bot with custom rewards, build from source (see README.md on GitHub).
+
+License: PolyForm Noncommercial 1.0.0 (see LICENSE.md). Not affiliated with
+Psyonix or Epic Games.
