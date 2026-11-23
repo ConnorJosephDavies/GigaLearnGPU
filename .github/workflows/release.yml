@@ -32,6 +32,7 @@ jobs:
           submodules: recursive
 
       - name: Set up Python 3.11
+        id: py
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -75,8 +76,13 @@ jobs:
       - name: Build GigaLearnGPU
         shell: pwsh
         run: |
+          # Pin CMake to the Python 3.11 set up above (the runner also has newer Pythons installed)
+          $pyexe = "${{ steps.py.outputs.python-path }}"
+          $pyroot = Split-Path $pyexe
           cmake -S . -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
+            "-DPython_ROOT_DIR=$pyroot" "-DPython_EXECUTABLE=$pyexe" "-DPYTHON_EXECUTABLE=$pyexe" `
+            "-DPYTHON_LIBRARY=$pyroot\libs\python311.lib" "-DPYTHON_INCLUDE_DIR=$pyroot\include" `
             "-DROCKETGPU_CUDA_ROOT=$env:CUDA_PATH" `
             "-DCMAKE_CUDA_ARCHITECTURES=$env:CUDA_ARCHS"
           cmake --build build
