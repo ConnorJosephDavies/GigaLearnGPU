@@ -78,7 +78,7 @@ git clone --recursive https://github.com/ConnorJosephDavies/GigaLearnGPU
 cd GigaLearnGPU
 
 :: 1. Build RocketGPU (produces RocketGPU/build/rocketgpu.lib)
-cmake -S RocketGPU -B RocketGPU/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DROCKETGPU_USE_CUDA=ON -DROCKETGPU_CPU_ISPC=OFF -DROCKETGPU_CUDA_SPLIT=ON -DCMAKE_CUDA_ARCHITECTURES=86
+cmake -S RocketGPU -B RocketGPU/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DROCKETGPU_USE_CUDA=ON -DROCKETGPU_CPU_ISPC=OFF -DROCKETGPU_CUDA_SPLIT=OFF -DCMAKE_CUDA_ARCHITECTURES=86
 cmake --build RocketGPU/build --target rocketgpu
 
 :: 2. Build GigaLearn and the example trainer
