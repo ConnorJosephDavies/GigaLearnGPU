@@ -63,7 +63,15 @@ jobs:
           $f = "GigaLearnCPP\libtorch\share\cmake\Caffe2\public\cuda.cmake"
           (Get-Content $f -Raw) -replace 'CUDA::nvToolsExt', '' | Set-Content $f
 
+      - name: Restore RocketGPU build cache
+        id: rgcache
+        uses: actions/cache/restore@v4
+        with:
+          path: RocketGPU/build/rocketgpu.lib
+          key: rocketgpu-${{ env.CUDA_VERSION }}-${{ env.CUDA_ARCHS }}-nosplit-${{ hashFiles('RocketGPU/**') }}
+
       - name: Build RocketGPU
+        if: steps.rgcache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           cmake -S RocketGPU -B RocketGPU/build -G Ninja `
@@ -72,6 +80,13 @@ jobs:
             -DROCKETGPU_NATIVE_ARCH=OFF `
             "-DCMAKE_CUDA_ARCHITECTURES=$env:CUDA_ARCHS"
           cmake --build RocketGPU/build --target rocketgpu
+
+      - name: Save RocketGPU build cache
+        if: steps.rgcache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: RocketGPU/build/rocketgpu.lib
+          key: ${{ steps.rgcache.outputs.cache-primary-key }}
 
       - name: Build GigaLearnGPU
         shell: pwsh
