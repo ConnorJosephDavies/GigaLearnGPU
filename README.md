@@ -24,7 +24,7 @@ Reinforcement learning bots learn by playing an enormous number of games. In [Gi
 
 | | |
 |---|---|
-| ⚡ **Throughput** | **~95–105k steps per second**, end to end, including PPO training |
+| ⚡ **Throughput** | **160–200k steps per second** on average, end to end, including PPO training |
 | 🏟️ **Arenas** | **4,096** simulated at once by default |
 | 🖥️ **Hardware** | One RTX 3070 + Ryzen 7 2700X |
 | 🧠 **Training setup** | 1v1, tick skip 8, 2 PPO epochs, 400k batch, 1024-wide network |
