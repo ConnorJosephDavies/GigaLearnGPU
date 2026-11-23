@@ -63,7 +63,11 @@ build\GigaLearnExample.exe
 
 `src/ExampleMain.cpp` is a minimal 1v1 trainer that uses only the stock rewards. Swap in your own rewards, obs and state setters exactly as you would in GigaLearnCPP.
 
-## Credits and licenses
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE.md). You're free to use, modify and share it for personal, hobby, research or educational use. You may not sell it or use it commercially. Bundled third-party code (RocketGPU, RocketSim, Bullet, etc.) keeps its own license.
+
+## Credits
 
 - **GigaLearnCPP and RLGymCPP:** ZealanL.
 - **RocketSim:** ZealanL, MIT.
